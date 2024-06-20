@@ -7,7 +7,7 @@ use std::time::Duration;
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
 struct BackgroundWorker {
-    _thread: std::thread::JoinHandle<()>,
+    _thread: Option<std::thread::JoinHandle<()>>,
 }
 
 /// Represents a background running R script.
@@ -23,6 +23,11 @@ impl BackgroundWorker {
     /// BackgroundWorker$new("script.R", schedule)
     /// @export
     fn new(script: String, schedule: &str) -> Result<BackgroundWorker> {
+        if let Ok(worker_id) = std::env::var("FAUCET_WORKER_ID") {
+            if worker_id != "1" {
+                return Ok(BackgroundWorker { _thread: None });
+            }
+        }
         let schedule = cron::Schedule::from_str(schedule)
             .map_err(|e| e.to_string())?
             .upcoming_owned(chrono::Local);
@@ -46,7 +51,9 @@ impl BackgroundWorker {
                     .status();
             }
         });
-        Ok(BackgroundWorker { _thread: thread })
+        Ok(BackgroundWorker {
+            _thread: Some(thread),
+        })
     }
 }
 
