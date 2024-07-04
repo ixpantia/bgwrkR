@@ -10,6 +10,13 @@ struct BackgroundWorker {
     _thread: Option<std::thread::JoinHandle<()>>,
 }
 
+fn run_rscript(script: &str) {
+    let _status = Command::new("Rscript")
+        .arg(script)
+        .stdin(std::process::Stdio::null())
+        .status();
+}
+
 /// Represents a background running R script.
 /// @export
 #[extendr]
@@ -17,17 +24,21 @@ impl BackgroundWorker {
     /// @title Start a new `BackgroundWorker`.
     /// @param script The path to the Rscript to run in the background
     /// @param schedule A cron-like schedule. See example for more detail.
+    /// @param run_start Should the script run at start
     /// @examples
     /// #           sec  min   hour   day of month   month   day of week   year
     /// schedule <- "0   30   9,12,15     1,15       May-Aug  Mon,Wed,Fri  2018/2"
     /// BackgroundWorker$new("script.R", schedule)
     /// @export
-    fn new(script: String, schedule: &str) -> Result<BackgroundWorker> {
+    fn new(script: String, schedule: &str, run_start: bool) -> Result<BackgroundWorker> {
         if let Ok(worker_id) = std::env::var("FAUCET_WORKER_ID") {
             if worker_id != "1" {
                 return Ok(BackgroundWorker { _thread: None });
             }
         }
+        // Run the script at the start if run_start
+        // is true
+        run_start.then(|| run_rscript(&script));
         let schedule = cron::Schedule::from_str(schedule)
             .map_err(|e| e.to_string())?
             .upcoming_owned(chrono::Local);
@@ -45,10 +56,7 @@ impl BackgroundWorker {
                         break 'waiter;
                     }
                 }
-                let _status = Command::new("Rscript")
-                    .arg(&script)
-                    .stdin(std::process::Stdio::null())
-                    .status();
+                run_rscript(&script)
             }
         });
         Ok(BackgroundWorker {

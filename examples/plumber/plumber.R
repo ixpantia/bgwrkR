@@ -1,6 +1,6 @@
 library(bgwrkR)
 
-worker <- BackgroundWorker$new("background.R", schedule = "* * * * * *")
+worker <- BackgroundWorker$new("background.R", schedule = "* * * * * *", TRUE)
 
 #* Echo back the input
 #* @param msg The message to echo

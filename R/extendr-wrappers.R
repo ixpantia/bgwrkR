@@ -15,7 +15,7 @@ NULL
 #' @export
 BackgroundWorker <- new.env(parent = emptyenv())
 
-BackgroundWorker$new <- function(script, schedule) .Call(wrap__BackgroundWorker__new, script, schedule)
+BackgroundWorker$new <- function(script, schedule, run_start) .Call(wrap__BackgroundWorker__new, script, schedule, run_start)
 
 #' @rdname BackgroundWorker
 #' @usage NULL
