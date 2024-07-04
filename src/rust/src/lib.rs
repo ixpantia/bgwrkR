@@ -36,13 +36,13 @@ impl BackgroundWorker {
                 return Ok(BackgroundWorker { _thread: None });
             }
         }
-        // Run the script at the start if run_start
-        // is true
-        run_start.then(|| run_rscript(&script));
         let schedule = cron::Schedule::from_str(schedule)
             .map_err(|e| e.to_string())?
             .upcoming_owned(chrono::Local);
         let thread = std::thread::spawn(move || {
+            // Run the script at the start if run_start
+            // is true
+            run_start.then(|| run_rscript(&script));
             // We loop over all the possible next times
             for next in schedule {
                 // We wait until time is greater than the current
